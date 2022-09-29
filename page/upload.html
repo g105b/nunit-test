@@ -1,0 +1,13 @@
+<p>Upload page</p>
+<p>This is the only page that should allow file uploads > 1MB.</p>
+
+<form method="post" enctype="application/x-www-form-urlencoded">
+	<label>
+		<span>Pick a file</span>
+		<input type="file" required />
+	</label>
+	<button name="do" value="upload">Upload</button>
+</form>
+
+<p>Latest uploaded file will appear here:</p>
+<p><a data-bind:href="/upload/{{filename}}">N/A</a></p>

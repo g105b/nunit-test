@@ -1,0 +1,25 @@
+<p>Contact page</p>
+<p>This page can be exploited to upload a large file, but PHP should prevent it.</p>
+
+<form method="post">
+	<label>
+		<span>Name</span>
+		<input name="name" required />
+	</label>
+	<label>
+		<span>Message</span>
+		<input name="message" required />
+	</label>
+	<button name="do" value="submit">Submit</button>
+</form>
+
+<button id="exploit">Exploit form</button>
+<script>
+exploit.addEventListener("click", () => {
+	document.forms[0].enctype = "application/x-www-form-urlencoded";
+	let fileUpload = document.createElement("input");
+	fileUpload.type = "file";
+	fileUpload.name = "exploit";
+	document.forms[0]["do"].before(fileUpload);
+});
+</script>

@@ -1,0 +1,47 @@
+{
+	"listeners": {
+		"*:80": {
+			"pass": "routes"
+		}
+	},
+	"routes": [
+		{
+			"match": {
+				"host": "myapp.g105b.com"
+			},
+			"action": {
+				"share": "/www/myapp/www$uri",
+				"chroot": "/www/myapp",
+				"follow_symlinks": true,
+				"traverse_mounts": true,
+				"fallback": {
+					"pass": "applications/myapp"
+				}
+			}
+		}
+	],
+	"applications": {
+		"myapp": {
+			"type": "php",
+			"root": "/www/myapp/www",
+			"script": "/www/myapp/vendor/phpgt/webengine/go.php",
+			"working_directory": "/www/myapp",
+			"options": {
+				"file": "/etc/php/8.1/embed/conf.d/100-myapp.ini",
+				"admin": {
+					"memory_limit": "256M"
+				},
+				"user": {
+					"display_errors": "0",
+					"upload_max_filesize": "10M",
+					"post_max_size": "10M",
+					"max_execution_time": 10
+				}
+			}
+		}
+	},
+	"access_log": {
+		"path": "/var/log/unit/access.log",
+		"format": "$remote_addr - - [$time_local] \"$request_line\" $status $body_bytes_sent \"$header_referer\" \"$header_user_agent\" $cookie_ulid"
+	}
+}

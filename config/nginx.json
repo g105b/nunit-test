@@ -23,6 +23,8 @@
 	"applications": {
 		"myapp": {
 			"type": "php",
+			"user": "unit-myapp",
+			"group": "unit-myapp",
 			"root": "/www/myapp/www",
 			"script": "/www/myapp/vendor/phpgt/webengine/go.php",
 			"working_directory": "/www/myapp",
@@ -35,7 +37,7 @@
 					"display_errors": "0",
 					"upload_max_filesize": "10M",
 					"post_max_size": "10M",
-					"max_execution_time": 10
+					"max_execution_time": "10"
 				}
 			}
 		}

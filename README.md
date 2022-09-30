@@ -7,7 +7,7 @@ Log of commands issued to test server:
 ```bash
 # Install server requirements
 curl -sL 'https://unit.nginx.org/_downloads/setup-unit.sh' | sudo -E bash
-apt install unit unit-php git unzip php{xml,mbstring,zip}
+apt install -y unit unit-php git unzip php-{xml,mbstring,zip}
 
 # Install Composer
 wget https://raw.githubusercontent.com/composer/getcomposer.org/76a7060ccb93902cd7576b67264ad91c8a2700e2/web/installer -O - -q | php -- --quiet
@@ -18,6 +18,7 @@ mkdir -p /var/www
 chown unit. /var/www
 systemctl stop unit
 usermod -d /var/www unit
+mkdir -p /var/log/unit
 systemctl start unit
 
 # Log in as unit user to configure local commands
@@ -45,13 +46,18 @@ npm install --global webpack-cli sass
 git clone https://github.com/g105b/nunit-test myapp
 cd myapp
 composer install
+php vendor/phpgt/webengine/setup.php
 gt build
 exit
 
 # Configure web server
 #TODO: Use jq to loop over each section, set individually via API, to allow existing config to be present.
+useradd --no-create-home unit-myapp
+usermod -L unit-myapp
+usermod -aG unit-myapp unit
+ 
 curl -X PUT \
 	--data-binary @/var/www/myapp/config/nginx.json \
 	--unix-socket /var/run/control.unit.sock \
-	"http://localhost/config
+	"http://localhost/config"
 ```

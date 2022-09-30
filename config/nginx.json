@@ -10,8 +10,8 @@
 				"host": "myapp.g105b.com"
 			},
 			"action": {
-				"share": "/www/myapp/www$uri",
-				"chroot": "/www/myapp",
+				"share": "/var/www/myapp/www$uri",
+				"chroot": "/var/www/myapp/",
 				"follow_symlinks": true,
 				"traverse_mounts": true,
 				"fallback": {
@@ -25,9 +25,9 @@
 			"type": "php",
 			"user": "unit-myapp",
 			"group": "unit-myapp",
-			"root": "/www/myapp/www",
-			"script": "/www/myapp/vendor/phpgt/webengine/go.php",
-			"working_directory": "/www/myapp",
+			"root": "/var/www/myapp/www/",
+			"script": "index.php",
+			"working_directory": "/var/www/myapp/",
 			"options": {
 				"file": "/etc/php/8.1/embed/conf.d/100-myapp.ini",
 				"admin": {

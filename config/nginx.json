@@ -2,6 +2,12 @@
 	"listeners": {
 		"*:80": {
 			"pass": "routes"
+		},
+		"*:443": {
+			"pass": "routes",
+			"tls": {
+				"certificate": "myapp-certbot"
+			}
 		}
 	},
 	"routes": [

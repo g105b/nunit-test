@@ -5,9 +5,10 @@ It's not going to do anything fancy, and I'll delete it at some point.
 Log of commands issued to test server:
 
 ```bash
+set -e
 # Install server requirements
 curl -sL 'https://unit.nginx.org/_downloads/setup-unit.sh' | sudo -E bash
-apt install -y unit unit-php git unzip php-{xml,mbstring,zip}
+apt-get install -y unit unit-php git unzip jq php-{curl,xml,mbstring,zip}
 
 # Install Composer
 wget https://raw.githubusercontent.com/composer/getcomposer.org/76a7060ccb93902cd7576b67264ad91c8a2700e2/web/installer -O - -q | php -- --quiet
@@ -51,13 +52,56 @@ gt build
 exit
 
 # Configure web server
-#TODO: Use jq to loop over each section, set individually via API, to allow existing config to be present.
 useradd --no-create-home unit-myapp
 usermod -L unit-myapp
 usermod -aG unit-myapp unit
  
-curl -X PUT \
-	--data-binary @/var/www/myapp/config/nginx.json \
-	--unix-socket /var/run/control.unit.sock \
-	"http://localhost/config"
+tmp=/tmp/nginx-unit-cfg
+cfgPath=/var/www/myapp/config/nginx.json
+
+unit_cfg () {
+	cfg=$1
+	path=$2
+	section=${3-config}
+	echo "Configuring path $path with config: $1"
+	echo "$cfg" > $tmp
+	curl -X PUT \
+		--data-binary @$tmp \
+		--unix-socket /var/run/control.unit.sock \
+		"http://localhost/$section/$path"
+	rm $tmp
+}
+
+snap install core
+snap refresh core
+snap install --classic certbot
+ln -s /snap/bin/certbot /usr/bin/certbot
+systemctl stop unit
+certbot certonly --dry-run --standalone -d myapp.g105b.com
+systemctl start unit
+
+bundle=$(cat /etc/letsencrypt/live/myapp.g105b.com/fullchain.pem /etc/letsencrypt/live/myapp.g105b.com/privkey.pem)
+unit_cfg "$bundle" "myapp-certbot" "certificates"
+
+unit_cfg "[]" "routes"
+
+config_applications=$(jq -r '.applications | to_entries[] | .key' "$cfgPath")
+while IFS= read -r application
+do
+	cfg=$(jq ".applications.\"$application\"" "$cfgPath")
+	unit_cfg "$cfg" "applications/$application"
+done <<< $config_applications
+
+config_listeners=$(jq -r '.listeners | to_entries[] | .key' "$cfgPath")
+while IFS= read -r listener
+do
+	cfg=$(jq ".listeners.\"$listener\"" "$cfgPath")
+	unit_cfg "$cfg" "listeners/$listener"
+done <<< $config_listeners
+
+cfg=$(jq '.routes' "$cfgPath")
+unit_cfg "$cfg" "routes"
+
+cfg=$(jq '.access_log' "$cfgPath")
+unit_cfg "$cfg" "access_log"
 ```

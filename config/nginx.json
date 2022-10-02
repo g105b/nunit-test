@@ -53,7 +53,7 @@
 	},
 	"listeners": {
 		"*:80": {
-			"pass": "routes/http"
+			"pass": "routes/testapp-force-https"
 		},
 		"*:443": {
 			"pass": "routes/testapp",

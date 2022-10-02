@@ -27,6 +27,7 @@ systemctl start unit
 # Log in as unit user to configure local commands
 sudo -u unit bash <<"UNIT_BASH"
 cd
+mkdir html
 # Set up "gt" command
 composer global require phpgt/gtcommand
 cat << EOF >> ~/.bashrc
@@ -65,7 +66,6 @@ unit_cfg () {
 	cfg=$1
 	path=$2
 	section=${3-config}
-	echo "Configuring path $path with config: $1"
 	echo "$cfg" > $tmp
 	curl -X PUT \
 		--data-binary @$tmp \
@@ -78,14 +78,13 @@ snap install core
 snap refresh core
 snap install --classic certbot
 ln -s /snap/bin/certbot /usr/bin/certbot
-systemctl stop unit
-certbot certonly --dry-run --noninteractive --standalone -d myapp.g105b.com
-systemctl start unit
+certbot certonly --noninteractive --standalone --agree-tos --email myapp.g105b.com.certbot@g105b.com -d myapp.g105b.com
 
 bundle=$(cat /etc/letsencrypt/live/myapp.g105b.com/fullchain.pem /etc/letsencrypt/live/myapp.g105b.com/privkey.pem)
 unit_cfg "$bundle" "myapp-certbot" "certificates"
 
-unit_cfg "[]" "routes"
+cfg=$(jq '.access_log' "$cfgPath")
+unit_cfg "$cfg" "access_log"
 
 config_applications=$(jq -r '.applications | to_entries[] | .key' "$cfgPath")
 while IFS= read -r application
@@ -94,16 +93,23 @@ do
 	unit_cfg "$cfg" "applications/$application"
 done <<< $config_applications
 
+config_routes=$(jq -r '.routes | to_entries[] | .key' "$cfgPath")
+while IFS= read -r route
+do
+	cfg=$(jq ".routes.\"$route\"" "$cfgPath")
+	unit_cfg "$cfg" "routes/$route"
+done <<< $config_routes
+
 config_listeners=$(jq -r '.listeners | to_entries[] | .key' "$cfgPath")
 while IFS= read -r listener
 do
 	cfg=$(jq ".listeners.\"$listener\"" "$cfgPath")
 	unit_cfg "$cfg" "listeners/$listener"
 done <<< $config_listeners
-
-cfg=$(jq '.routes' "$cfgPath")
-unit_cfg "$cfg" "routes"
-
-cfg=$(jq '.access_log' "$cfgPath")
-unit_cfg "$cfg" "access_log"
 ```
+
+### Certbot
+
+At setup time, the first certificate is generated with the name `myapp-certbot`, and is done via the standalone webserver of certbot. The name is needed, as the listener on port 443 refers to this certificate name. The standalone webserver is needed at this point as there is nothing configured to listen on any ports yet.
+
+For renewals, the standalone server can't be used without having to temporarily turn off Nginx Unit - this would cause downtime so instead, renewal challenge files are placed directly in the application's web root and served by the route's "share" configuration.

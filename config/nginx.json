@@ -1,31 +1,4 @@
 {
-	"listeners": {
-		"*:80": {
-			"pass": "routes"
-		},
-		"*:443": {
-			"pass": "routes",
-			"tls": {
-				"certificate": "myapp-certbot"
-			}
-		}
-	},
-	"routes": [
-		{
-			"match": {
-				"host": "myapp.g105b.com"
-			},
-			"action": {
-				"share": "/var/www/myapp/www$uri",
-				"chroot": "/var/www/myapp/",
-				"follow_symlinks": true,
-				"traverse_mounts": true,
-				"fallback": {
-					"pass": "applications/myapp"
-				}
-			}
-		}
-	],
 	"applications": {
 		"myapp": {
 			"type": "php",
@@ -45,6 +18,47 @@
 					"post_max_size": "10M",
 					"max_execution_time": "10"
 				}
+			}
+		}
+	},
+	"routes": {
+		"myapp-force-https": [
+			{
+				"match": {
+					"host": "myapp.g105b.com",
+					"scheme": "http"
+				},
+				"action": {
+					"return": 303,
+					"location": "https://myapp.g105b.com"
+				}
+			}
+		],
+		"myapp": [
+			{
+				"match": {
+					"host": "myapp.g105b.com"
+				},
+				"action": {
+					"share": "/var/www/myapp/www$uri",
+					"chroot": "/var/www/myapp/",
+					"follow_symlinks": true,
+					"traverse_mounts": true,
+					"fallback": {
+						"pass": "applications/myapp"
+					}
+				}
+			}
+		]
+	},
+	"listeners": {
+		"*:80": {
+			"pass": "routes/http"
+		},
+		"*:443": {
+			"pass": "routes/myapp",
+			"tls": {
+				"certificate": "myapp-certbot"
 			}
 		}
 	},

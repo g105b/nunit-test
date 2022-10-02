@@ -25,19 +25,19 @@
 		"testapp-force-https": [
 			{
 				"match": {
-					"host": "testapp.g105b.com",
+					"host": "testapp2.g105b.com",
 					"scheme": "http"
 				},
 				"action": {
 					"return": 303,
-					"location": "https://testapp.g105b.com"
+					"location": "https://testapp2.g105b.com"
 				}
 			}
 		],
 		"testapp": [
 			{
 				"match": {
-					"host": "testapp.g105b.com"
+					"host": "testapp2.g105b.com"
 				},
 				"action": {
 					"share": "/var/www/testapp/www$uri",

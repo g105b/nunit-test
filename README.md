@@ -107,7 +107,7 @@ done <<< $config_applications
 config_routes=$(jq -r '.routes | to_entries[] | .key' "$cfgPath")
 while IFS= read -r route
 do
-	cfg=$(jq ".routes.\"$route\"" "$cfgPath")
+	cfg=$(jq ".routes.\"$route\"[]" "$cfgPath")
 	unit_cfg "$cfg" "routes/$route"
 done <<< $config_routes
 

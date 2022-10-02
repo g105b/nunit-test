@@ -1,14 +1,14 @@
 {
 	"applications": {
-		"myapp": {
+		"testapp": {
 			"type": "php",
-			"user": "unit-myapp",
-			"group": "unit-myapp",
-			"root": "/var/www/myapp/www/",
+			"user": "unit-testapp",
+			"group": "unit-testapp",
+			"root": "/var/www/testapp/www/",
 			"script": "index.php",
-			"working_directory": "/var/www/myapp/",
+			"working_directory": "/var/www/testapp/",
 			"options": {
-				"file": "/etc/php/8.1/embed/conf.d/100-myapp.ini",
+				"file": "/etc/php/8.1/embed/conf.d/100-testapp.ini",
 				"admin": {
 					"memory_limit": "256M"
 				},
@@ -22,30 +22,30 @@
 		}
 	},
 	"routes": {
-		"myapp-force-https": [
+		"testapp-force-https": [
 			{
 				"match": {
-					"host": "myapp.g105b.com",
+					"host": "testapp.g105b.com",
 					"scheme": "http"
 				},
 				"action": {
 					"return": 303,
-					"location": "https://myapp.g105b.com"
+					"location": "https://testapp.g105b.com"
 				}
 			}
 		],
-		"myapp": [
+		"testapp": [
 			{
 				"match": {
-					"host": "myapp.g105b.com"
+					"host": "testapp.g105b.com"
 				},
 				"action": {
-					"share": "/var/www/myapp/www$uri",
-					"chroot": "/var/www/myapp/",
+					"share": "/var/www/testapp/www$uri",
+					"chroot": "/var/www/testapp/",
 					"follow_symlinks": true,
 					"traverse_mounts": true,
 					"fallback": {
-						"pass": "applications/myapp"
+						"pass": "applications/testapp"
 					}
 				}
 			}
@@ -56,9 +56,9 @@
 			"pass": "routes/http"
 		},
 		"*:443": {
-			"pass": "routes/myapp",
+			"pass": "routes/testapp",
 			"tls": {
-				"certificate": "myapp-certbot"
+				"certificate": "testapp-certbot"
 			}
 		}
 	},

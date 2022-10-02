@@ -6,6 +6,16 @@ Log of commands issued to test server:
 
 ```bash
 set -e
+app_name="$1"
+domain="$2"
+if [[ "$domain" != *"."* ]]
+then
+	echo "Incorrect usage. Arguments should be: "
+	echo "1. app_name"
+	echo "2. domain"
+	exit 1
+fi
+
 # Install server requirements
 export DEBIAN_FRONTEND=noninteractive
 curl -sL 'https://unit.nginx.org/_downloads/setup-unit.sh' | bash
@@ -25,7 +35,8 @@ mkdir -p /var/log/unit
 systemctl start unit
 
 # Log in as unit user to configure local commands
-sudo -u unit bash <<"UNIT_BASH"
+sudo -u unit bash <<"UNIT_BASH" -s -- $app_name
+app_name=$1
 cd
 mkdir html
 # Set up "gt" command
@@ -47,20 +58,20 @@ nvm install v16
 npm install --global webpack-cli sass
 
 # Install test app
-git clone https://github.com/g105b/nunit-test myapp
-cd myapp
+git clone https://github.com/g105b/nunit-test $app_name
+cd $app_name
 composer install
 php vendor/phpgt/webengine/setup.php
 gt build
 UNIT_BASH
 
 # Configure web server
-useradd --no-create-home unit-myapp
-usermod -L unit-myapp
-usermod -aG unit-myapp unit
+useradd --no-create-home unit-$app_name
+usermod -L unit-$app_name
+usermod -aG unit-$app_name unit
  
 tmp=/tmp/nginx-unit-cfg
-cfgPath=/var/www/myapp/config/nginx.json
+cfgPath=/var/www/$app_name/config/nginx.json
 
 unit_cfg () {
 	cfg=$1
@@ -78,10 +89,10 @@ snap install core
 snap refresh core
 snap install --classic certbot
 ln -s /snap/bin/certbot /usr/bin/certbot
-certbot certonly --noninteractive --standalone --agree-tos --email myapp.g105b.com.certbot@g105b.com -d myapp.g105b.com
+certbot certonly --noninteractive --standalone --agree-tos --email $app_name.g105b.com.certbot@g105b.com -d $domain
 
-bundle=$(cat /etc/letsencrypt/live/myapp.g105b.com/fullchain.pem /etc/letsencrypt/live/myapp.g105b.com/privkey.pem)
-unit_cfg "$bundle" "myapp-certbot" "certificates"
+bundle=$(cat /etc/letsencrypt/live/$domain/fullchain.pem /etc/letsencrypt/live/$domain/privkey.pem)
+unit_cfg "$bundle" "$app_name-certbot" "certificates"
 
 cfg=$(jq '.access_log' "$cfgPath")
 unit_cfg "$cfg" "access_log"
@@ -110,6 +121,6 @@ done <<< $config_listeners
 
 ### Certbot
 
-At setup time, the first certificate is generated with the name `myapp-certbot`, and is done via the standalone webserver of certbot. The name is needed, as the listener on port 443 refers to this certificate name. The standalone webserver is needed at this point as there is nothing configured to listen on any ports yet.
+At setup time, the first certificate is generated with the name `$app_name-certbot`, and is done via the standalone webserver of certbot. The name is needed, as the listener on port 443 refers to this certificate name. The standalone webserver is needed at this point as there is nothing configured to listen on any ports yet.
 
 For renewals, the standalone server can't be used without having to temporarily turn off Nginx Unit - this would cause downtime so instead, renewal challenge files are placed directly in the application's web root and served by the route's "share" configuration.

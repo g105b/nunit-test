@@ -1091,12 +1091,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/PhpGt/WebEngine.git",
-                "reference": "0962ecb183ab0e0fcc9ae224de8e7ae87f75f680"
+                "reference": "1123773052eacb5700eccf7f9c8cf7d342618fd7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PhpGt/WebEngine/zipball/0962ecb183ab0e0fcc9ae224de8e7ae87f75f680",
-                "reference": "0962ecb183ab0e0fcc9ae224de8e7ae87f75f680",
+                "url": "https://api.github.com/repos/PhpGt/WebEngine/zipball/1123773052eacb5700eccf7f9c8cf7d342618fd7",
+                "reference": "1123773052eacb5700eccf7f9c8cf7d342618fd7",
                 "shasum": ""
             },
             "require": {
@@ -1158,7 +1158,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2022-09-27T13:24:16+00:00"
+            "time": "2022-09-30T09:38:56+00:00"
         },
         {
             "name": "psr/container",

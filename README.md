@@ -7,8 +7,10 @@ Log of commands issued to test server:
 ```bash
 set -e
 # Install server requirements
-curl -sL 'https://unit.nginx.org/_downloads/setup-unit.sh' | sudo -E bash
+export DEBIAN_FRONTEND=noninteractive
+curl -sL 'https://unit.nginx.org/_downloads/setup-unit.sh' | bash
 apt-get install -y unit unit-php git unzip jq php-{curl,xml,mbstring,zip}
+echo "Done apt-get"
 
 # Install Composer
 wget https://raw.githubusercontent.com/composer/getcomposer.org/76a7060ccb93902cd7576b67264ad91c8a2700e2/web/installer -O - -q | php -- --quiet
@@ -23,7 +25,7 @@ mkdir -p /var/log/unit
 systemctl start unit
 
 # Log in as unit user to configure local commands
-sudo -u unit /bin/bash
+sudo -u unit bash <<"UNIT_BASH"
 cd
 # Set up "gt" command
 composer global require phpgt/gtcommand
@@ -36,7 +38,7 @@ export PATH="$PATH:~/.config/composer/vendor/bin"
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
 cat << EOF >> ~/.bashrc
 export NVM_DIR="$HOME/.nvm"
-[ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 EOF
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -49,7 +51,7 @@ cd myapp
 composer install
 php vendor/phpgt/webengine/setup.php
 gt build
-exit
+UNIT_BASH
 
 # Configure web server
 useradd --no-create-home unit-myapp
@@ -77,7 +79,7 @@ snap refresh core
 snap install --classic certbot
 ln -s /snap/bin/certbot /usr/bin/certbot
 systemctl stop unit
-certbot certonly --dry-run --standalone -d myapp.g105b.com
+certbot certonly --dry-run --noninteractive --standalone -d myapp.g105b.com
 systemctl start unit
 
 bundle=$(cat /etc/letsencrypt/live/myapp.g105b.com/fullchain.pem /etc/letsencrypt/live/myapp.g105b.com/privkey.pem)

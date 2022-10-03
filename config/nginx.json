@@ -1,14 +1,14 @@
 {
 	"applications": {
-		"testapp": {
+		"testing": {
 			"type": "php",
-			"user": "unit-testapp",
-			"group": "unit-testapp",
-			"root": "/var/www/testapp/www/",
+			"user": "unit-testing",
+			"group": "unit-testing",
+			"root": "/var/www/testing/www/",
 			"script": "index.php",
-			"working_directory": "/var/www/testapp/",
+			"working_directory": "/var/www/testing/",
 			"options": {
-				"file": "/etc/php/8.1/embed/conf.d/100-testapp.ini",
+				"file": "/etc/php/8.1/embed/conf.d/100-testing.ini",
 				"admin": {
 					"memory_limit": "256M"
 				},
@@ -22,30 +22,30 @@
 		}
 	},
 	"routes": {
-		"testapp-force-https": [
+		"testing-force-https": [
 			{
 				"match": {
-					"host": "testapp2.g105b.com",
+					"host": "testing.g105b.com",
 					"scheme": "http"
 				},
 				"action": {
 					"return": 303,
-					"location": "https://testapp2.g105b.com"
+					"location": "https://testing.g105b.com"
 				}
 			}
 		],
-		"testapp": [
+		"testing": [
 			{
 				"match": {
-					"host": "testapp2.g105b.com"
+					"host": "testing.g105b.com"
 				},
 				"action": {
-					"share": "/var/www/testapp/www$uri",
-					"chroot": "/var/www/testapp/",
+					"share": "/var/www/testing/www$uri",
+					"chroot": "/var/www/testing/",
 					"follow_symlinks": true,
 					"traverse_mounts": true,
 					"fallback": {
-						"pass": "applications/testapp"
+						"pass": "applications/testing"
 					}
 				}
 			}
@@ -53,12 +53,12 @@
 	},
 	"listeners": {
 		"*:80": {
-			"pass": "routes/testapp-force-https"
+			"pass": "routes/testing-force-https"
 		},
 		"*:443": {
-			"pass": "routes/testapp",
+			"pass": "routes/testing",
 			"tls": {
-				"certificate": "testapp-certbot"
+				"certificate": "testing-certbot"
 			}
 		}
 	},

@@ -1,8 +1,10 @@
-This is just a test repository I'm using to test deploying projects while I'm learning how to use and configure Nginx Unit.
+This repository holds the test code I'm writing to learn how to set up and deploy Nginx Unit.
 
-It's not going to do anything fancy, and I'll delete it at some point.
+Current status: provide the bash script below with the name of the application and the application's domain, and this repository will be deployed to the server with all dependencies handled and TLS set up.
 
-Log of commands issued to test server:
+Feel free to reference the way I've set any of this up, fork it, steal it, whatever.
+
+Set up the entire server in a single script:
 
 ```bash
 set -e
@@ -73,6 +75,11 @@ usermod -aG unit-$app_name unit
 tmp=/tmp/nginx-unit-cfg
 cfgPath=/var/www/$app_name/config/nginx.json
 
+# A convenience function wrapping the curl configuration
+# Pass two/three arguments: 
+# 1. The JSON string containing configuration, e.g. { "actions": { "return": 404 }}
+# 2. The path to the configuration, e.g. routes.test-app
+# 3. Optional - The section of configuration to apply, e.g. certificates (default: config)  
 unit_cfg () {
 	cfg=$1
 	path=$2
@@ -85,15 +92,16 @@ unit_cfg () {
 	rm $tmp
 }
 
+# Handle generation of TLS certificate
 snap install core
 snap refresh core
 snap install --classic certbot
 ln -s /snap/bin/certbot /usr/bin/certbot
 certbot certonly --noninteractive --standalone --agree-tos --email $app_name.g105b.com.certbot@g105b.com -d $domain
-
 bundle=$(cat /etc/letsencrypt/live/$domain/fullchain.pem /etc/letsencrypt/live/$domain/privkey.pem)
-unit_cfg "$bundle" "$app_name-certbot" "certificates"
 
+# Set up Nginx Unit configuration areas
+unit_cfg "$bundle" "$app_name-certbot" "certificates"
 cfg=$(jq '.access_log' "$cfgPath")
 unit_cfg "$cfg" "access_log"
 
@@ -118,6 +126,8 @@ do
 	cfg=$(jq ".listeners.\"$listener\"" "$cfgPath")
 	unit_cfg "$cfg" "listeners/$listener"
 done <<< $config_listeners
+
+echo "Completed setting up: $domain"
 ```
 
 ### Certbot
@@ -125,3 +135,26 @@ done <<< $config_listeners
 At setup time, the first certificate is generated with the name `$app_name-certbot`, and is done via the standalone webserver of certbot. The name is needed, as the listener on port 443 refers to this certificate name. The standalone webserver is needed at this point as there is nothing configured to listen on any ports yet.
 
 For renewals, the standalone server can't be used without having to temporarily turn off Nginx Unit - this would cause downtime so instead, renewal challenge files are placed directly in the application's web root and served by the route's "share" configuration.
+
+The following script should be executed periodically, such as in a monthly crontab, to handle renewals:
+
+TODO: This section needs to work with multiple certificates, explained in [issue #2](https://github.com/g105b/nunit-test/issues/2)
+
+```bash
+certbot certonly \
+	--agree-tos \
+	--email $domain.certbot@g105b.com \
+	--webroot \
+	--webroot-path /var/www/$app_name/www/ \
+	--deploy-hook /var/www/$app_name/config/certbot-hook.bash \
+	-n \
+	-d $domain
+
+# Add the new certificate, date stamped
+date_stamp=$(date "+%F")
+tmp=/tmp/nginx-unit-cfg
+cat /etc/letsencrypt/live/testing.g105b.com/fullchain.pem /etc/letsencrypt/live/testing.g105b.com/privkey.pem > $tmp
+curl --request PUT --data-binary @$tmp --unix-socket /var/run/control.unit.sock "http://localhost/certificates/testing-certbot-$date_stamp"
+# Set the listener to use the new certificate
+curl --request PUT --data "\"testing-certbot-$date_stamp\"" --unix-socket /var/run/control.unit.sock "http://localhost/config/listeners/*:443/tls/certificate"
+```
